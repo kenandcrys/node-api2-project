@@ -33,32 +33,47 @@ router.get('/:id', async (req, res) => {
   };
 });
 
-router.post('/',  (req, res) => {
-  const { title, contents } = req.body;
-  if(!title || !contents) {
-    res.status(400).json({
-      message: "Please provide title and contents for the post"
-    })
-  } else {
-    Posts.insert({ title, contents })
-      .then(({ id }) => {
-        return Posts.findById(id)
-      })
-      .then(post => {
-        res.status(201).json(post)
-      })
-      .catch(err => {
-        res.status(500).json({ 
-          message: "There was an error while saving the post to the database" 
-        })
-      })
+router.post('/', async (req, res) => {
+  try {
+    const { title, contents } = req.body;
+    if (!title || !contents) {
+      res.status(400).json({
+        message: "Please provide title and contents for the post"
+      });
+    } else {
+      const insertedPost = await Posts.insert({ title, contents });
+      const retrievedPost = await Posts.findById(insertedPost.id);
+      res.status(201).json(retrievedPost);
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "There was an error while saving the post to the database"
+    });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Posts.findById(id);
+
+    if (post) {
+      await Posts.remove(id);
+      res.status(200).json(post);
+    } else {
+      res.status(404).json({
+        message: "The post with the specified ID does not exist"
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "The post could not be removed"
+    });
   }
 });
 
 
-router.delete('/:id', async (req, res) => {
-
-})
 
 router.put('/id', async (req, res) => {
 
